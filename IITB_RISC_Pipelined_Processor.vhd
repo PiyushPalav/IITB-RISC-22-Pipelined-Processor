@@ -36,6 +36,7 @@ architecture Structural of IITB_RISC_Pipelined_Processor is
     signal sign_extend_immediate_opr2 : std_logic_vector(0 downto 0);
     signal left_shift_registerB : std_logic_vector(0 downto 0);
     signal is_instr_lhi : std_logic_vector(0 downto 0);
+    signal is_instr_jal : std_logic_vector(0 downto 0);
     signal condition_code : std_logic_vector(1 downto 0);
     signal flags_modified : std_logic_vector(1 downto 0);
 
@@ -56,6 +57,7 @@ architecture Structural of IITB_RISC_Pipelined_Processor is
     signal SE_immediate_ID_RR : std_logic_vector(15 downto 0) := (others => '0');
     signal Left_Shift_RegB_ID_RR : std_logic_vector(0 downto 0) := (others => '0');
     signal LHI_Instr_ID_RR : std_logic_vector(0 downto 0) := (others => '0');
+    signal JAL_Instr_ID_RR : std_logic_vector(0 downto 0) := (others => '0');
     signal Condition_Code_ID_RR : std_logic_vector(1 downto 0) := (others => 'X');
     signal Flags_modified_ID_RR : std_logic_vector(1 downto 0) := (others => '0');
 
@@ -77,6 +79,7 @@ architecture Structural of IITB_RISC_Pipelined_Processor is
     signal SE_immediate_RR_EX : std_logic_vector(15 downto 0) := (others => '0');
     signal Left_Shift_RegB_RR_EX : std_logic_vector(0 downto 0) := (others => '0');
     signal LHI_Instr_RR_EX : std_logic_vector(0 downto 0) := (others => '0');
+    signal JAL_Instr_RR_EX : std_logic_vector(0 downto 0) := (others => '0');
     signal LHI_instr_WB_data_RR_EX : std_logic_vector(15 downto 0) := (others => 'X');
     signal Condition_Code_RR_EX : std_logic_vector(1 downto 0) := (others => 'X');
     signal Flags_modified_RR_EX : std_logic_vector(1 downto 0) := (others => '0');
@@ -100,6 +103,7 @@ architecture Structural of IITB_RISC_Pipelined_Processor is
     signal ALU_output_flags_EX_MA : std_logic_vector(1 downto 0);
     signal Load0_Store1_EX_MA : std_logic_vector(0 downto 0) := (others => 'X');
     signal LHI_Instr_EX_MA : std_logic_vector(0 downto 0) := (others => '0');
+    signal JAL_Instr_EX_MA : std_logic_vector(0 downto 0) := (others => '0');
     signal LHI_instr_WB_data_EX_MA : std_logic_vector(15 downto 0) := (others => 'X');
     signal Condition_Code_EX_MA : std_logic_vector(1 downto 0) := (others => 'X');
     signal Flags_modified_EX_MA : std_logic_vector(1 downto 0) := (others => '0');
@@ -120,6 +124,7 @@ architecture Structural of IITB_RISC_Pipelined_Processor is
     signal Data_memory_data_out_MA_WB : std_logic_vector(15 downto 0) := (others => '0');
     signal ALU_output_flags_MA_WB : std_logic_vector(1 downto 0);
     signal LHI_Instr_MA_WB : std_logic_vector(0 downto 0) := (others => '0');
+    signal JAL_Instr_MA_WB : std_logic_vector(0 downto 0) := (others => '0');
     signal LHI_instr_WB_data_MA_WB : std_logic_vector(15 downto 0) := (others => 'X');
     signal Condition_Code_MA_WB : std_logic_vector(1 downto 0) := (others => 'X');
     signal Flags_modified_MA_WB : std_logic_vector(1 downto 0) := (others => '0');
@@ -129,11 +134,15 @@ architecture Structural of IITB_RISC_Pipelined_Processor is
 
     signal PC_for_BEQ : std_logic_vector(15 downto 0) := (others => '0');
     signal BEQ_condition_true : std_logic;
+
+    signal PC_for_JAL : std_logic_vector(15 downto 0) := (others => '0');
 begin
     PC_enable <= '1';
     -- PC_next <= PC_plus_one;
-    PC_next <= PC_for_BEQ when BEQ_condition_true='1' else PC_plus_one; --PC+Imm when BEQ condition passes else PC+1
     BEQ_condition_true <= '1' when ALU_operation_RR_EX="10" and ALU_output_flags_RR_EX(1 downto 1)="1" else '0';
+    PC_next <= PC_for_BEQ when BEQ_condition_true='1' else  --PC+Imm when BEQ condition passes
+               PC_for_JAL when is_instr_jal="1" else --PC+Imm for JAL instr
+               PC_plus_one; -- else PC+1
 
     InstrFetch : Instruction_Fetch port map(
         clk => clk, clear => clear, PC_enable => PC_enable, PC_in => PC_next, PC_plus_one => PC_plus_one, PC_out => PC_out, Instruction_Register => Instruction_Register 
@@ -141,7 +150,7 @@ begin
     
     -- enable_IF_ID <= '1';
     enable_IF_ID <= not clear_IF_ID;
-    clear_IF_ID <= clear or BEQ_condition_true;
+    clear_IF_ID <= clear or BEQ_condition_true or is_instr_jal(0);
     
     PC_for_R7_IF_ID_reg : nbit_register generic map (N => 16) port map (
         clk => clk, clear => clear, enable => '1', data_in => PC_out, data_out => PC_for_R7_IF_ID
@@ -157,13 +166,16 @@ begin
         Instruction_Register => Instruction_Register_IF_ID, regsource1 => regsource1, regsource2 => regsource2, regdest => regdest,
         alu_operation => alu_operation, register_writeback => register_writeback, load0_store1 => load0_store1,
         sign_extend_6_or_9_bit_immediate => sign_extend_6_or_9_bit_immediate, sign_extend_immediate_opr2 => sign_extend_immediate_opr2,
-        left_shift_registerB => left_shift_registerB, is_instr_lhi => is_instr_lhi, condition_code => condition_code, flags_modified => flags_modified
+        left_shift_registerB => left_shift_registerB, is_instr_lhi => is_instr_lhi, is_instr_jal => is_instr_jal,
+        condition_code => condition_code, flags_modified => flags_modified
     );
 
     SignExtendImmediate : sign_extend_immediate port map(
         Instruction_Register => Instruction_Register_IF_ID, sign_extend_6_or_9_bit_immediate => sign_extend_6_or_9_bit_immediate,
         sign_extended_immediate_data => sign_extended_immediate_data
     );
+    
+    PC_for_JAL <= std_logic_vector(unsigned(PC_IF_ID) + unsigned(sign_extended_immediate_data));
 
     -- enable_ID_RR <= '1';
     enable_ID_RR <= not clear_ID_RR;
@@ -185,6 +197,7 @@ begin
         SE_immediate_IF_ID => sign_extended_immediate_data, SE_immediate_ID_RR => SE_immediate_ID_RR,
         Left_Shift_RegB_IF_ID => left_shift_registerB, Left_Shift_RegB_ID_RR => Left_Shift_RegB_ID_RR,
         LHI_Instr_IF_ID => is_instr_lhi, LHI_Instr_ID_RR => LHI_Instr_ID_RR,
+        JAL_Instr_IF_ID => is_instr_jal, JAL_Instr_ID_RR => JAL_Instr_ID_RR,
         Condition_Code_IF_ID => condition_code, Condition_Code_ID_RR => Condition_Code_ID_RR,
         Flags_modified_IF_ID => flags_modified, Flags_modified_ID_RR => Flags_modified_ID_RR
     );
@@ -218,6 +231,7 @@ begin
         SE_immediate_ID_RR => SE_immediate_ID_RR, SE_immediate_RR_EX => SE_immediate_RR_EX,
         Left_Shift_RegB_ID_RR => Left_Shift_RegB_ID_RR, Left_Shift_RegB_RR_EX => Left_Shift_RegB_RR_EX,
         LHI_Instr_ID_RR => LHI_Instr_ID_RR, LHI_Instr_RR_EX => LHI_Instr_RR_EX,
+        JAL_Instr_ID_RR => JAL_Instr_ID_RR, JAL_Instr_RR_EX => JAL_Instr_RR_EX,
         Condition_Code_ID_RR => Condition_Code_ID_RR, Condition_Code_RR_EX => Condition_Code_RR_EX,
         Flags_modified_ID_RR => Flags_modified_ID_RR, Flags_modified_RR_EX => Flags_modified_RR_EX
     );
@@ -252,6 +266,7 @@ begin
         ALU_output_flags_RR_EX => ALU_output_flags_RR_EX, ALU_output_flags_EX_MA => ALU_output_flags_EX_MA,
         Load0_Store1_RR_EX => Load0_Store1_RR_EX, Load0_Store1_EX_MA => Load0_Store1_EX_MA,
         LHI_Instr_RR_EX => LHI_Instr_RR_EX, LHI_Instr_EX_MA => LHI_Instr_EX_MA,
+        JAL_Instr_RR_EX => JAL_Instr_RR_EX, JAL_Instr_EX_MA => JAL_Instr_EX_MA,
         LHI_instr_WB_data_RR_EX => LHI_instr_WB_data_RR_EX, LHI_instr_WB_data_EX_MA => LHI_instr_WB_data_EX_MA,
         Condition_Code_RR_EX => Condition_Code_RR_EX, Condition_Code_EX_MA => Condition_Code_EX_MA,
         Flags_modified_RR_EX => Flags_modified_RR_EX, Flags_modified_EX_MA => Flags_modified_EX_MA
@@ -282,6 +297,7 @@ begin
         Data_memory_data_out_EX_MA => Data_memory_data_out, Data_memory_data_out_MA_WB => Data_memory_data_out_MA_WB,
         ALU_output_flags_EX_MA => ALU_output_flags_EX_MA, ALU_output_flags_MA_WB => ALU_output_flags_MA_WB,
         LHI_Instr_EX_MA => LHI_Instr_EX_MA, LHI_Instr_MA_WB => LHI_Instr_MA_WB,
+        JAL_Instr_EX_MA => JAL_Instr_EX_MA, JAL_Instr_MA_WB => JAL_Instr_MA_WB,
         LHI_instr_WB_data_EX_MA => LHI_instr_WB_data_EX_MA, LHI_instr_WB_data_MA_WB => LHI_instr_WB_data_MA_WB,
         Condition_Code_EX_MA => Condition_Code_EX_MA, Condition_Code_MA_WB => Condition_Code_MA_WB,
         Flags_modified_EX_MA => Flags_modified_EX_MA, Flags_modified_MA_WB => Flags_modified_MA_WB
@@ -294,6 +310,7 @@ begin
 
     Register_Writeback_data <= Data_memory_data_out_MA_WB when Load0_Store1_MA_WB="0" else -- Writeback data read from memory for LW
                                LHI_instr_WB_data_MA_WB when LHI_Instr_MA_WB="1" else -- Writeback 7bit left shifted imm data for LHI
+                               PC_plus_one_MA_WB when JAL_Instr_MA_WB="1" else -- Writeback PC+1 into RA for JAL instr
                                ALU_output_MA_WB; -- Writeback ALU output
     
     CY_flag : nbit_register generic map(N => 1) port map(

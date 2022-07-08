@@ -28,6 +28,8 @@ entity EX_MA is
         Load0_Store1_EX_MA : out std_logic_vector(0 downto 0) := (others => 'X');
         LHI_Instr_RR_EX : in std_logic_vector(0 downto 0);
         LHI_Instr_EX_MA : out std_logic_vector(0 downto 0) := (others => '0');
+        JAL_Instr_RR_EX : in std_logic_vector(0 downto 0);
+        JAL_Instr_EX_MA : out std_logic_vector(0 downto 0) := (others => '0');
         LHI_instr_WB_data_RR_EX : in std_logic_vector(15 downto 0);
         LHI_instr_WB_data_EX_MA : out std_logic_vector(15 downto 0) := (others => 'X');
         Condition_Code_RR_EX : in std_logic_vector(1 downto 0);
@@ -81,6 +83,10 @@ begin
     
     LHIInstr_reg : nbit_register generic map (N => 1) port map (
         clk => clk, clear => clear_EX_MA, enable => enable_EX_MA, data_in => LHI_Instr_RR_EX, data_out => LHI_Instr_EX_MA
+    );
+
+    JALInstr_reg : nbit_register generic map (N => 1) port map (
+        clk => clk, clear => clear_EX_MA, enable => enable_EX_MA, data_in => JAL_Instr_RR_EX, data_out => JAL_Instr_EX_MA
     );
 
     LHIInstrWBData_reg : nbit_register generic map (N => 16) port map (

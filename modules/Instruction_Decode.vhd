@@ -14,6 +14,7 @@ entity Instruction_Decode is
         sign_extend_immediate_opr2 : out std_logic_vector(0 downto 0):= (others => 'X');
         left_shift_registerB : out std_logic_vector(0 downto 0) := (others => '0'); -- '1' for ADL instruction
         is_instr_lhi : out std_logic_vector(0 downto 0) := (others => '0'); -- '1' for LHI instruction
+        is_instr_jal : out std_logic_vector(0 downto 0) := (others => '0'); -- '1' for JAL instruction
         condition_code : out std_logic_vector(1 downto 0) := (others => 'X'); -- 00 if no flag needs to be set, 01 if CY, 10 if Z flag needs to be set  
         flags_modified : out std_logic_vector(1 downto 0) := (others => '0') -- 00 for no flags modified, 01 if CY, 10 if Z, 11 if both flags modified
     );
@@ -39,6 +40,7 @@ begin
                 sign_extend_immediate_opr2 <= (others => '0');
                 left_shift_registerB <= (others => '0');
                 is_instr_lhi <= (others => '0');
+                is_instr_jal <= (others => '0');
                 condition_code <= Instruction_Register(1 downto 0);
                 flags_modified <= "11";
                 if (Instruction_Register(1 downto 0) = "11") then   -- ADL
@@ -55,6 +57,7 @@ begin
                 sign_extend_immediate_opr2 <= (others => '1');
                 left_shift_registerB <= (others => '0');
                 is_instr_lhi <= (others => '0');
+                is_instr_jal <= (others => '0');
                 condition_code <= (others => 'X');
                 flags_modified <= "11";
             when "0010" =>              -- NDU, NDC, NDZ
@@ -68,6 +71,7 @@ begin
                 sign_extend_immediate_opr2 <= (others => '0');
                 left_shift_registerB <= (others => '0');
                 is_instr_lhi <= (others => '0');
+                is_instr_jal <= (others => '0');
                 condition_code <= Instruction_Register(1 downto 0);
                 flags_modified <= "10";
             when "0011" =>              -- LHI
@@ -81,6 +85,7 @@ begin
                 sign_extend_immediate_opr2 <= (others => '1');
                 left_shift_registerB <= (others => '0');
                 is_instr_lhi <= (others => '1');
+                is_instr_jal <= (others => '0');
                 condition_code <= (others => 'X');
                 flags_modified <= "10";
             when "0100" =>              -- LW
@@ -94,6 +99,7 @@ begin
                 sign_extend_immediate_opr2 <= (others => '1');
                 left_shift_registerB <= (others => '0');
                 is_instr_lhi <= (others => '0');
+                is_instr_jal <= (others => '0');
                 condition_code <= (others => 'X');
                 flags_modified <= "10";
             when "0101" =>              -- SW
@@ -107,6 +113,7 @@ begin
                 sign_extend_immediate_opr2 <= (others => '1');
                 left_shift_registerB <= (others => '0');
                 is_instr_lhi <= (others => '0');
+                is_instr_jal <= (others => '0');
                 condition_code <= (others => 'X');
                 flags_modified <= "00";
             when "1000" =>              -- BEQ
@@ -120,8 +127,23 @@ begin
                 sign_extend_immediate_opr2 <= (others => '0');
                 left_shift_registerB <= (others => '0');
                 is_instr_lhi <= (others => '0');
+                is_instr_jal <= (others => '0');
                 condition_code <= (others => 'X');
                 flags_modified <= "10";
+            when "1001" =>              -- JAL
+                regsource1 <= "XXX";
+                regsource2 <= "XXX";
+                regdest <= RA;
+                alu_operation <= "XX";
+                register_writeback <= (others => '1');
+                load0_store1 <= (others => 'X');
+                sign_extend_6_or_9_bit_immediate <= '1';
+                sign_extend_immediate_opr2 <= (others => '0');
+                left_shift_registerB <= (others => '0');
+                is_instr_lhi <= (others => '0');
+                is_instr_jal <= (others => '1');
+                condition_code <= (others => 'X');
+                flags_modified <= "00";
             when others =>
                 regsource1 <= "XXX";
                 regsource2 <= "XXX";
@@ -133,6 +155,7 @@ begin
                 sign_extend_immediate_opr2 <= (others => '0');
                 left_shift_registerB <= (others => '0');
                 is_instr_lhi <= (others => '0');
+                is_instr_jal <= (others => '0');
                 condition_code <= (others => 'X');
                 flags_modified <= "00";
         end case;

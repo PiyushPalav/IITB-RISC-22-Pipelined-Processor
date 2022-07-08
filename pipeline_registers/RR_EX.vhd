@@ -32,6 +32,8 @@ entity RR_EX is
         Left_Shift_RegB_RR_EX : out std_logic_vector(0 downto 0) := (others => '0');
         LHI_Instr_ID_RR : in std_logic_vector(0 downto 0);
         LHI_Instr_RR_EX : out std_logic_vector(0 downto 0) := (others => '0');
+        JAL_Instr_ID_RR : in std_logic_vector(0 downto 0);
+        JAL_Instr_RR_EX : out std_logic_vector(0 downto 0) := (others => '0');
         Condition_Code_ID_RR : in std_logic_vector(1 downto 0);
         Condition_Code_RR_EX : out std_logic_vector(1 downto 0) := (others => 'X');
         Flags_modified_ID_RR : in std_logic_vector(1 downto 0); 
@@ -91,6 +93,10 @@ begin
 
     LHIInstr_reg : nbit_register generic map (N => 1) port map (
         clk => clk, clear => clear_RR_EX, enable => enable_RR_EX, data_in => LHI_Instr_ID_RR, data_out => LHI_Instr_RR_EX
+    );
+
+    JALInstr_reg : nbit_register generic map (N => 1) port map (
+        clk => clk, clear => clear_RR_EX, enable => enable_RR_EX, data_in => JAL_Instr_ID_RR, data_out => JAL_Instr_RR_EX
     );
 
     Condition_Code_reg : nbit_register generic map (N => 2) port map (

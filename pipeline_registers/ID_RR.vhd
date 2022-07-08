@@ -30,6 +30,8 @@ entity ID_RR is
         Left_Shift_RegB_ID_RR : out std_logic_vector(0 downto 0) := (others => '0');
         LHI_Instr_IF_ID : in std_logic_vector(0 downto 0);
         LHI_Instr_ID_RR : out std_logic_vector(0 downto 0) := (others => '0');
+        JAL_Instr_IF_ID : in std_logic_vector(0 downto 0);
+        JAL_Instr_ID_RR : out std_logic_vector(0 downto 0) := (others => '0');
         Condition_Code_IF_ID : in std_logic_vector(1 downto 0);
         Condition_Code_ID_RR : out std_logic_vector(1 downto 0) := (others => 'X');
         Flags_modified_IF_ID : in std_logic_vector(1 downto 0); 
@@ -89,6 +91,10 @@ begin
     
     LHIInstr_reg : nbit_register generic map (N => 1) port map (
         clk => clk, clear => clear_ID_RR, enable => enable_ID_RR, data_in => LHI_Instr_IF_ID, data_out => LHI_Instr_ID_RR
+    );
+
+    JALInstr_reg : nbit_register generic map (N => 1) port map (
+        clk => clk, clear => clear_ID_RR, enable => enable_ID_RR, data_in => JAL_Instr_IF_ID, data_out => JAL_Instr_ID_RR
     );
 
     Condition_Code_reg : nbit_register generic map (N => 2) port map (

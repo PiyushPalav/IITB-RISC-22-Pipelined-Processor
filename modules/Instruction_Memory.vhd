@@ -45,6 +45,14 @@ begin
     Instruction_ROM(20) <= "0001001010011000"; -- ADD R3=R1+R2
     Instruction_ROM(21) <= "0100001000011001"; -- LW R1=M[R0+SE(011001)]
 
+    Instruction_ROM(22) <= "1001001000000110"; -- JAL R1,#6
+    Instruction_ROM(23) <= "0001001010100000"; -- ADD R4=R1+R2
+    Instruction_ROM(24) <= "0001000000101001"; -- ADZ R5=R0+R0
+    Instruction_ROM(25) <= "0001011010011000"; -- ADD R3=R3+R2
+    Instruction_ROM(26) <= "0001001010011000"; -- ADD R3=R1+R2
+    Instruction_ROM(27) <= "0001001010011000"; -- ADD R3=R1+R2
+    Instruction_ROM(28) <= "0001010011110011"; -- ADL R6=R2+R3<<1
+
     process (Instruction_memory_address, Instruction_ROM) begin
         Instruction_memory_data_out <= Instruction_ROM(to_integer(unsigned(Instruction_memory_address)));
     end process;
