@@ -22,7 +22,9 @@ architecture Structural of IITB_RISC_Pipelined_Processor is
     signal Instruction_Register : std_logic_vector(15 downto 0) := (others => '0');
 
     signal enable_IF_ID : std_logic;
+    signal clear_IF_ID : std_logic;
     signal PC_IF_ID : std_logic_vector(15 downto 0) := (others => '0');
+    signal PC_for_R7_IF_ID : std_logic_vector(15 downto 0) := (others => '0');
     signal PC_plus_one_IF_ID : std_logic_vector(15 downto 0) := (others => '0');
     signal Instruction_Register_IF_ID : std_logic_vector(15 downto 0) := (others => '0');
 
@@ -40,8 +42,10 @@ architecture Structural of IITB_RISC_Pipelined_Processor is
     signal sign_extended_immediate_data : std_logic_vector(15 downto 0);
 
     signal enable_ID_RR : std_logic;
+    signal clear_ID_RR : std_logic;
     signal RegSource1_ID_RR, RegSource2_ID_RR : std_logic_vector(2 downto 0) := (others => 'X');
     signal PC_ID_RR : std_logic_vector(15 downto 0) := (others => '0');
+    signal PC_for_R7_ID_RR : std_logic_vector(15 downto 0) := (others => '0');
     signal PC_plus_one_ID_RR : std_logic_vector(15 downto 0) := (others => '0');
     signal Opcode_ID_RR : std_logic_vector(3 downto 0) := (others => '0');
     signal RegDest_ID_RR : std_logic_vector(2 downto 0) := (others => 'X');
@@ -59,7 +63,9 @@ architecture Structural of IITB_RISC_Pipelined_Processor is
     signal R7_enable : std_logic;
 
     signal enable_RR_EX : std_logic;
+    signal clear_RR_EX : std_logic;
     signal PC_RR_EX : std_logic_vector(15 downto 0) := (others => '0');
+    signal PC_for_R7_RR_EX : std_logic_vector(15 downto 0) := (others => '0');
     signal PC_plus_one_RR_EX : std_logic_vector(15 downto 0) := (others => '0');
     signal Opcode_RR_EX : std_logic_vector(3 downto 0) := (others => '0');
     signal RegSource1_Data_RR_EX, RegSource2_Data_RR_EX : std_logic_vector(15 downto 0) := (others => 'X');
@@ -84,6 +90,7 @@ architecture Structural of IITB_RISC_Pipelined_Processor is
 
     signal enable_EX_MA : std_logic;
     signal PC_EX_MA : std_logic_vector(15 downto 0) := (others => '0');
+    signal PC_for_R7_EX_MA : std_logic_vector(15 downto 0) := (others => '0');
     signal PC_plus_one_EX_MA : std_logic_vector(15 downto 0) := (others => '0');
     signal Opcode_EX_MA : std_logic_vector(3 downto 0) := (others => '0');
     signal RegSource1_Data_EX_MA, RegSource2_Data_EX_MA : std_logic_vector(15 downto 0) := (others => 'X');
@@ -103,6 +110,7 @@ architecture Structural of IITB_RISC_Pipelined_Processor is
 
     signal enable_MA_WB : std_logic;
     signal PC_MA_WB : std_logic_vector(15 downto 0) := (others => '0');
+    signal PC_for_R7_MA_WB : std_logic_vector(15 downto 0) := (others => '0');
     signal PC_plus_one_MA_WB : std_logic_vector(15 downto 0) := (others => '0');
     signal Opcode_MA_WB : std_logic_vector(3 downto 0) := (others => '0');
     signal RegDest_MA_WB : std_logic_vector(2 downto 0) := (others => 'X');
@@ -118,18 +126,29 @@ architecture Structural of IITB_RISC_Pipelined_Processor is
 
     signal Reg_WB_Enable : std_logic_vector(0 downto 0) := (others => '0');
     signal Register_Writeback_data : std_logic_vector(15 downto 0) := (others => 'X');
+
+    signal PC_for_BEQ : std_logic_vector(15 downto 0) := (others => '0');
+    signal BEQ_condition_true : std_logic;
 begin
     PC_enable <= '1';
-    PC_next <= PC_plus_one;
+    -- PC_next <= PC_plus_one;
+    PC_next <= PC_for_BEQ when BEQ_condition_true='1' else PC_plus_one; --PC+Imm when BEQ condition passes else PC+1
+    BEQ_condition_true <= '1' when ALU_operation_RR_EX="10" and ALU_output_flags_RR_EX(1 downto 1)="1" else '0';
 
     InstrFetch : Instruction_Fetch port map(
         clk => clk, clear => clear, PC_enable => PC_enable, PC_in => PC_next, PC_plus_one => PC_plus_one, PC_out => PC_out, Instruction_Register => Instruction_Register 
     );
     
-    enable_IF_ID <= '1';
+    -- enable_IF_ID <= '1';
+    enable_IF_ID <= not clear_IF_ID;
+    clear_IF_ID <= clear or BEQ_condition_true;
+    
+    PC_for_R7_IF_ID_reg : nbit_register generic map (N => 16) port map (
+        clk => clk, clear => clear, enable => '1', data_in => PC_out, data_out => PC_for_R7_IF_ID
+    );
 
     IF_ID_pipeline_reg : IF_ID port map(
-        clk => clk, clear_IF_ID => clear, enable_IF_ID => enable_IF_ID, PC_out => PC_out, PC_IF_ID => PC_IF_ID,
+        clk => clk, clear_IF_ID => clear_IF_ID, enable_IF_ID => enable_IF_ID, PC_out => PC_out, PC_IF_ID => PC_IF_ID,
         PC_plus_one => PC_plus_one, PC_plus_one_IF_ID => PC_plus_one_IF_ID,
         Instruction_Register => Instruction_Register, Instruction_Register_IF_ID => Instruction_Register_IF_ID
     );
@@ -146,10 +165,16 @@ begin
         sign_extended_immediate_data => sign_extended_immediate_data
     );
 
-    enable_ID_RR <= '1';
+    -- enable_ID_RR <= '1';
+    enable_ID_RR <= not clear_ID_RR;
+    clear_ID_RR <= clear or BEQ_condition_true;
+    
+    PC_for_R7_ID_RR_reg : nbit_register generic map (N => 16) port map (
+        clk => clk, clear => clear, enable => '1', data_in => PC_for_R7_IF_ID, data_out => PC_for_R7_ID_RR
+    );
 
     ID_RR_pipeline_reg : ID_RR port map(
-        clk => clk, clear_ID_RR => clear, enable_ID_RR => enable_ID_RR, PC_IF_ID => PC_IF_ID, PC_ID_RR => PC_ID_RR,
+        clk => clk, clear_ID_RR => clear_ID_RR, enable_ID_RR => enable_ID_RR, PC_IF_ID => PC_IF_ID, PC_ID_RR => PC_ID_RR,
         PC_plus_one_IF_ID => PC_plus_one_IF_ID, PC_plus_one_ID_RR => PC_plus_one_ID_RR,
         Opcode_IF_ID => Instruction_Register(15 downto 12), Opcode_ID_RR => Opcode_ID_RR, RegSource1_IF_ID => regsource1, RegSource1_ID_RR => RegSource1_ID_RR,
         RegSource2_IF_ID => regsource2, RegSource2_ID_RR => RegSource2_ID_RR, RegDest_IF_ID => regdest, RegDest_ID_RR => RegDest_ID_RR,
@@ -169,19 +194,20 @@ begin
     RegisterRead : Register_Read port map(
         clk => clk, clear => clear, read_reg1 => RegSource1_ID_RR, read_reg2 => RegSource2_ID_RR, register_writeback => Reg_WB_Enable,
         R7_enable => R7_enable, write_reg => RegDest_MA_WB, read_data1 => RegSource1_Data_ID_RR, read_data2 => RegSource2_Data_ID_RR,
-        PC => PC_MA_WB, write_data => Register_Writeback_data, R0 => R0, R1 => R1, R2 => R2, R3 => R3, R4 => R4, R5 => R5, R6 => R6, R7 => R7
+        PC => PC_for_R7_MA_WB, write_data => Register_Writeback_data, R0 => R0, R1 => R1, R2 => R2, R3 => R3, R4 => R4, R5 => R5, R6 => R6, R7 => R7
+    );
+    -- Reg_WB_Enable depending on Conditional Arith Instr or reg wb signal from Decode stage carried forward
+    
+    -- enable_RR_EX <= '1';
+    enable_RR_EX <= not clear_RR_EX;
+    clear_RR_EX <= clear or BEQ_condition_true;
+    
+    PC_for_R7_RR_EX_reg : nbit_register generic map (N => 16) port map (
+        clk => clk, clear => clear, enable => '1', data_in => PC_for_R7_ID_RR, data_out => PC_for_R7_RR_EX
     );
 
-    -- RegisterFile : Register_File port map(
-    --     read_reg1 => RegSource1_ID_RR, read_reg2 => RegSource2_ID_RR,
-    --     read_data1 => RegSource1_Data_ID_RR, read_data2 => RegSource2_Data_ID_RR,
-    --     R0 => R0, R1 => R1, R2 => R2, R3 => R3, R4 => R4, R5 => R5, R6 => R6, R7 => R7
-    -- );
-    
-    enable_RR_EX <= '1';
-
     RR_EX_pipeline_reg : RR_EX port map(
-        clk => clk, clear_RR_EX => clear, enable_RR_EX => enable_RR_EX, PC_ID_RR => PC_ID_RR, PC_RR_EX => PC_RR_EX,
+        clk => clk, clear_RR_EX => clear_RR_EX, enable_RR_EX => enable_RR_EX, PC_ID_RR => PC_ID_RR, PC_RR_EX => PC_RR_EX,
         PC_plus_one_ID_RR => PC_plus_one_ID_RR, PC_plus_one_RR_EX => PC_plus_one_RR_EX,
         Opcode_ID_RR => Opcode_ID_RR, Opcode_RR_EX => Opcode_RR_EX, RegSource1_Data_ID_RR => RegSource1_Data_ID_RR, RegSource1_Data_RR_EX => RegSource1_Data_RR_EX,
         RegSource2_Data_ID_RR => RegSource2_Data_ID_RR, RegSource2_Data_RR_EX => RegSource2_Data_RR_EX, RegDest_ID_RR => RegDest_ID_RR, RegDest_RR_EX => RegDest_RR_EX,
@@ -206,8 +232,14 @@ begin
         A => RegSource1_Data_RR_EX, B => ALU2nd_input, Cin => '0', ALU_operation => ALU_operation_RR_EX,
         Output => ALU_output_RR_EX, ALU_output_flags => ALU_output_flags_RR_EX
     );
+
+    PC_for_BEQ <= std_logic_vector(unsigned(PC_RR_EX) + unsigned(SE_immediate_RR_EX));
     
     enable_EX_MA <= '1';
+    
+    PC_for_R7_EX_MA_reg : nbit_register generic map (N => 16) port map (
+        clk => clk, clear => clear, enable => '1', data_in => PC_for_R7_RR_EX, data_out => PC_for_R7_EX_MA
+    );
 
     EX_MA_pipeline_reg : EX_MA port map(
         clk => clk, clear_EX_MA => clear, enable_EX_MA => enable_EX_MA, PC_RR_EX => PC_RR_EX, PC_EX_MA => PC_EX_MA,
@@ -225,8 +257,8 @@ begin
         Flags_modified_RR_EX => Flags_modified_RR_EX, Flags_modified_EX_MA => Flags_modified_EX_MA
     );
 
-    Data_Memory_read_enable <= '1' when Load0_Store1_EX_MA="0" else '0';
-    Data_Memory_write_enable <= '1' when Load0_Store1_EX_MA="1" else '0';
+    Data_Memory_read_enable <= '1' when Load0_Store1_EX_MA="0" else '0'; -- Read from memory for LW
+    Data_Memory_write_enable <= '1' when Load0_Store1_EX_MA="1" else '0'; -- Write into memory for SW
 
     Memory_Access : Data_Memory generic map(data_memory_locations => 256, data_length => 16) port map(
         clk => clk, clear => clear, read_enable => Data_Memory_read_enable, write_enable => Data_Memory_write_enable,
@@ -234,6 +266,10 @@ begin
     );
     
     enable_MA_WB <= '1';
+    
+    PC_for_R7_MA_WB_reg : nbit_register generic map (N => 16) port map (
+        clk => clk, clear => clear, enable => '1', data_in => PC_for_R7_EX_MA, data_out => PC_for_R7_MA_WB
+    );
 
     MA_WB_pipeline_reg : MA_WB port map(
         clk => clk, clear_MA_WB => clear, enable_MA_WB => enable_MA_WB, PC_EX_MA => PC_EX_MA, PC_MA_WB => PC_MA_WB,
@@ -256,9 +292,9 @@ begin
         Reg_WB => Reg_WB_MA_WB, Reg_WB_Enable => Reg_WB_Enable
     );
 
-    Register_Writeback_data <= Data_memory_data_out_MA_WB when Load0_Store1_MA_WB="0" else
-                               LHI_instr_WB_data_MA_WB when LHI_Instr_MA_WB="1" else
-                               ALU_output_MA_WB;
+    Register_Writeback_data <= Data_memory_data_out_MA_WB when Load0_Store1_MA_WB="0" else -- Writeback data read from memory for LW
+                               LHI_instr_WB_data_MA_WB when LHI_Instr_MA_WB="1" else -- Writeback 7bit left shifted imm data for LHI
+                               ALU_output_MA_WB; -- Writeback ALU output
     
     CY_flag : nbit_register generic map(N => 1) port map(
             clk => clk, clear => clear, enable => Flags_modified_MA_WB(0),

@@ -19,21 +19,6 @@ architecture Behavioral of Instruction_Memory is
     type ROM is array(0 to Instruction_memory_locations-1) of std_logic_vector(Instruction_length-1 downto 0);
     signal Instruction_ROM : ROM := (others => (others => '0'));
 begin
-    -- Instruction_ROM(0) <= "0001001010011000"; -- ADD R3=R1+R2
-    -- Instruction_ROM(1) <= "0001001010011010"; -- ADC R3=R1+R2
-    -- Instruction_ROM(2) <= "0001001010011001"; -- ADZ R3=R1+R2
-    -- Instruction_ROM(3) <= "0001001010011011"; -- ADL R3=R1+R2<<1
-
-    -- Instruction_ROM(4) <= "0000001010011011"; -- ADI R2=R1+SE(011011)
-
-    -- Instruction_ROM(5) <= "0010001010011000"; -- NDU R3=R1 NAND R2
-    -- Instruction_ROM(6) <= "0010001010011010"; -- NDC R3=R1 NAND R2
-    -- Instruction_ROM(7) <= "0010001010011001"; -- NDZ R3=R1 NAND R2
-    
-    -- Instruction_ROM(8) <= "0101010010011001"; -- SW M[R2+SE(011001)]=R2
-    -- Instruction_ROM(9) <= "0001001010011000"; -- ADD R3=R1+R2
-    -- Instruction_ROM(10) <= "0100001010011001"; -- LW R1=M[R2+SE(011001)]
-
     Instruction_ROM(0) <= "0011000000000000"; -- LHI R0,#000000000
     Instruction_ROM(1) <= "0011001000000001"; -- LHI R1,#000000001
     Instruction_ROM(2) <= "0011010000000001"; -- LHI R2,#000000001
@@ -43,19 +28,22 @@ begin
     Instruction_ROM(6) <= "0011110000000001"; -- LHI R6,#000000001
 
     Instruction_ROM(7) <= "0001001010011000"; -- ADD R3=R1+R2
-    Instruction_ROM(8) <= "0001001010100010"; -- ADC R4=R1+R2
-    Instruction_ROM(9) <= "0001000000101001"; -- ADZ R5=R0+R0
-    Instruction_ROM(10) <= "0001001010011000"; -- ADD R3=R1+R2
-    Instruction_ROM(11) <= "0001001011110011"; -- ADL R6=R1+R3<<1
+    Instruction_ROM(8) <= "1000001010000110"; -- BEQ R1,R2,#6
+    Instruction_ROM(9) <= "0001001010100000"; -- ADD R4=R1+R2
+    Instruction_ROM(10) <= "0001000000101001"; -- ADZ R5=R0+R0
+    Instruction_ROM(11) <= "0001011010011000"; -- ADD R3=R3+R2
     Instruction_ROM(12) <= "0001001010011000"; -- ADD R3=R1+R2
-    Instruction_ROM(13) <= "0000100010011011"; -- ADI R2=R4+SE(011011)
+    Instruction_ROM(13) <= "0001001010011000"; -- ADD R3=R1+R2
+    Instruction_ROM(14) <= "0001001011110011"; -- ADL R6=R1+R3<<1
+    Instruction_ROM(15) <= "0001011010011000"; -- ADD R3=R3+R2
+    Instruction_ROM(16) <= "0000100010011011"; -- ADI R2=R4+SE(011011)
 
-    Instruction_ROM(14) <= "0010001010011000"; -- NDU R3=R1 NAND R2
+    Instruction_ROM(17) <= "0010001010011000"; -- NDU R3=R1 NAND R2
 
-    Instruction_ROM(15) <= "0101110000011001"; -- SW M[R0+SE(011001)]=R6
-    Instruction_ROM(16) <= "0001001010011000"; -- ADD R3=R1+R2
-    Instruction_ROM(17) <= "0001001010011000"; -- ADD R3=R1+R2
-    Instruction_ROM(18) <= "0100001000011001"; -- LW R1=M[R0+SE(011001)]
+    Instruction_ROM(18) <= "0101110000011001"; -- SW M[R0+SE(011001)]=R6
+    Instruction_ROM(19) <= "0001001010011000"; -- ADD R3=R1+R2
+    Instruction_ROM(20) <= "0001001010011000"; -- ADD R3=R1+R2
+    Instruction_ROM(21) <= "0100001000011001"; -- LW R1=M[R0+SE(011001)]
 
     process (Instruction_memory_address, Instruction_ROM) begin
         Instruction_memory_data_out <= Instruction_ROM(to_integer(unsigned(Instruction_memory_address)));

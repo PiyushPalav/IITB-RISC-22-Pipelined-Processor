@@ -7,7 +7,7 @@ entity Instruction_Decode is
     port (
         Instruction_Register : in std_logic_vector(15 downto 0);
         regsource1, regsource2, regdest : out std_logic_vector(2 downto 0) := (others => 'X');
-        alu_operation : out std_logic_vector(1 downto 0) := (others => 'X'); -- 00 for AND, 01 for NAND
+        alu_operation : out std_logic_vector(1 downto 0) := (others => 'X'); -- 00 for AND, 01 for NAND, 10 for compare
         register_writeback : out std_logic_vector(0 downto 0) := (others => 'X'); -- 0 for no writeback, 1 for register writeback
         load0_store1 : out std_logic_vector(0 downto 0) := (others => 'X'); -- 0 for load, 1 for store
         sign_extend_6_or_9_bit_immediate : out std_logic := 'X'; -- 0 for 6bit sign extend, 1 for 9bit sign extend
@@ -109,6 +109,19 @@ begin
                 is_instr_lhi <= (others => '0');
                 condition_code <= (others => 'X');
                 flags_modified <= "00";
+            when "1000" =>              -- BEQ
+                regsource1 <= RA;
+                regsource2 <= RB;
+                regdest <= "XXX";
+                alu_operation <= "10";
+                register_writeback <= (others => '0');
+                load0_store1 <= (others => 'X');
+                sign_extend_6_or_9_bit_immediate <= '0';
+                sign_extend_immediate_opr2 <= (others => '0');
+                left_shift_registerB <= (others => '0');
+                is_instr_lhi <= (others => '0');
+                condition_code <= (others => 'X');
+                flags_modified <= "10";
             when others =>
                 regsource1 <= "XXX";
                 regsource2 <= "XXX";
