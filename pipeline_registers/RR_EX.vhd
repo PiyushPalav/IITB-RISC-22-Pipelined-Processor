@@ -34,6 +34,8 @@ entity RR_EX is
         LHI_Instr_RR_EX : out std_logic_vector(0 downto 0) := (others => '0');
         JAL_Instr_ID_RR : in std_logic_vector(0 downto 0);
         JAL_Instr_RR_EX : out std_logic_vector(0 downto 0) := (others => '0');
+        JLR_Instr_ID_RR : in std_logic_vector(0 downto 0);
+        JLR_Instr_RR_EX : out std_logic_vector(0 downto 0) := (others => '0');
         Condition_Code_ID_RR : in std_logic_vector(1 downto 0);
         Condition_Code_RR_EX : out std_logic_vector(1 downto 0) := (others => 'X');
         Flags_modified_ID_RR : in std_logic_vector(1 downto 0); 
@@ -97,6 +99,10 @@ begin
 
     JALInstr_reg : nbit_register generic map (N => 1) port map (
         clk => clk, clear => clear_RR_EX, enable => enable_RR_EX, data_in => JAL_Instr_ID_RR, data_out => JAL_Instr_RR_EX
+    );
+
+    JLRInstr_reg : nbit_register generic map (N => 1) port map (
+        clk => clk, clear => clear_RR_EX, enable => enable_RR_EX, data_in => JLR_Instr_ID_RR, data_out => JLR_Instr_RR_EX
     );
 
     Condition_Code_reg : nbit_register generic map (N => 2) port map (

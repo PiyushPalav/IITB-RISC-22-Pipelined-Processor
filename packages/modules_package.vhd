@@ -66,6 +66,7 @@ package modules_package is
             left_shift_registerB : out std_logic_vector(0 downto 0) := (others => '0'); -- '1' for ADL instruction
             is_instr_lhi : out std_logic_vector(0 downto 0) := (others => '0'); -- '1' for LHI instruction
             is_instr_jal : out std_logic_vector(0 downto 0) := (others => '0'); -- '1' for JAL instruction
+            is_instr_jlr : out std_logic_vector(0 downto 0) := (others => '0'); -- '1' for JLR instruction
             condition_code : out std_logic_vector(1 downto 0) := (others => 'X'); -- 00 if no flag needs to be set, 01 if CY, 10 if Z flag needs to be set  
             flags_modified : out std_logic_vector(1 downto 0) := (others => '0') -- 00 for no flags modified, 01 if CY, 10 if Z, 11 if both flags modified
         );
@@ -108,6 +109,8 @@ package modules_package is
             LHI_Instr_ID_RR : out std_logic_vector(0 downto 0) := (others => '0');
             JAL_Instr_IF_ID : in std_logic_vector(0 downto 0);
             JAL_Instr_ID_RR : out std_logic_vector(0 downto 0) := (others => '0');
+            JLR_Instr_IF_ID : in std_logic_vector(0 downto 0);
+            JLR_Instr_ID_RR : out std_logic_vector(0 downto 0) := (others => '0');
             Condition_Code_IF_ID : in std_logic_vector(1 downto 0);
             Condition_Code_ID_RR : out std_logic_vector(1 downto 0) := (others => 'X');
             Flags_modified_IF_ID : in std_logic_vector(1 downto 0); 
@@ -169,6 +172,8 @@ package modules_package is
             LHI_Instr_RR_EX : out std_logic_vector(0 downto 0) := (others => '0');
             JAL_Instr_ID_RR : in std_logic_vector(0 downto 0);
             JAL_Instr_RR_EX : out std_logic_vector(0 downto 0) := (others => '0');
+            JLR_Instr_ID_RR : in std_logic_vector(0 downto 0);
+            JLR_Instr_RR_EX : out std_logic_vector(0 downto 0) := (others => '0');
             Condition_Code_ID_RR : in std_logic_vector(1 downto 0);
             Condition_Code_RR_EX : out std_logic_vector(1 downto 0) := (others => 'X');
             Flags_modified_ID_RR : in std_logic_vector(1 downto 0); 
@@ -224,6 +229,8 @@ package modules_package is
             LHI_Instr_EX_MA : out std_logic_vector(0 downto 0) := (others => '0');
             JAL_Instr_RR_EX : in std_logic_vector(0 downto 0);
             JAL_Instr_EX_MA : out std_logic_vector(0 downto 0) := (others => '0');
+            JLR_Instr_RR_EX : in std_logic_vector(0 downto 0);
+            JLR_Instr_EX_MA : out std_logic_vector(0 downto 0) := (others => '0');
             LHI_instr_WB_data_RR_EX : in std_logic_vector(15 downto 0);
             LHI_instr_WB_data_EX_MA : out std_logic_vector(15 downto 0) := (others => 'X');
             Condition_Code_RR_EX : in std_logic_vector(1 downto 0);
@@ -277,6 +284,8 @@ package modules_package is
             LHI_Instr_MA_WB : out std_logic_vector(0 downto 0) := (others => '0');
             JAL_Instr_EX_MA : in std_logic_vector(0 downto 0);
             JAL_Instr_MA_WB : out std_logic_vector(0 downto 0) := (others => '0');
+            JLR_Instr_EX_MA : in std_logic_vector(0 downto 0);
+            JLR_Instr_MA_WB : out std_logic_vector(0 downto 0) := (others => '0');
             LHI_instr_WB_data_EX_MA : in std_logic_vector(15 downto 0);
             LHI_instr_WB_data_MA_WB : out std_logic_vector(15 downto 0) := (others => 'X');
             Condition_Code_EX_MA : in std_logic_vector(1 downto 0);

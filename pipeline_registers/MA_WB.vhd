@@ -30,6 +30,8 @@ entity MA_WB is
         LHI_Instr_MA_WB : out std_logic_vector(0 downto 0) := (others => '0');
         JAL_Instr_EX_MA : in std_logic_vector(0 downto 0);
         JAL_Instr_MA_WB : out std_logic_vector(0 downto 0) := (others => '0');
+        JLR_Instr_EX_MA : in std_logic_vector(0 downto 0);
+        JLR_Instr_MA_WB : out std_logic_vector(0 downto 0) := (others => '0');
         LHI_instr_WB_data_EX_MA : in std_logic_vector(15 downto 0);
         LHI_instr_WB_data_MA_WB : out std_logic_vector(15 downto 0) := (others => 'X');
         Condition_Code_EX_MA : in std_logic_vector(1 downto 0);
@@ -83,6 +85,10 @@ begin
 
     JALInstr_reg : nbit_register generic map (N => 1) port map (
         clk => clk, clear => clear_MA_WB, enable => enable_MA_WB, data_in => JAL_Instr_EX_MA, data_out => JAL_Instr_MA_WB
+    );
+
+    JLRInstr_reg : nbit_register generic map (N => 1) port map (
+        clk => clk, clear => clear_MA_WB, enable => enable_MA_WB, data_in => JLR_Instr_EX_MA, data_out => JLR_Instr_MA_WB
     );
 
     LHIInstrWBData_reg : nbit_register generic map (N => 16) port map (
