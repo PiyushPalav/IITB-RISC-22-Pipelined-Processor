@@ -38,6 +38,7 @@ architecture Structural of IITB_RISC_Pipelined_Processor is
     signal is_instr_lhi : std_logic_vector(0 downto 0);
     signal is_instr_jal : std_logic_vector(0 downto 0);
     signal is_instr_jlr : std_logic_vector(0 downto 0);
+    signal is_instr_jri : std_logic_vector(0 downto 0);
     signal condition_code : std_logic_vector(1 downto 0);
     signal flags_modified : std_logic_vector(1 downto 0);
 
@@ -60,6 +61,7 @@ architecture Structural of IITB_RISC_Pipelined_Processor is
     signal LHI_Instr_ID_RR : std_logic_vector(0 downto 0) := (others => '0');
     signal JAL_Instr_ID_RR : std_logic_vector(0 downto 0) := (others => '0');
     signal JLR_Instr_ID_RR : std_logic_vector(0 downto 0) := (others => '0');
+    signal JRI_Instr_ID_RR : std_logic_vector(0 downto 0) := (others => '0');
     signal Condition_Code_ID_RR : std_logic_vector(1 downto 0) := (others => 'X');
     signal Flags_modified_ID_RR : std_logic_vector(1 downto 0) := (others => '0');
 
@@ -142,6 +144,7 @@ architecture Structural of IITB_RISC_Pipelined_Processor is
 
     signal PC_for_JAL : std_logic_vector(15 downto 0) := (others => '0');
     signal PC_for_JLR : std_logic_vector(15 downto 0) := (others => '0');
+    signal PC_for_JRI : std_logic_vector(15 downto 0) := (others => '0');
 begin
     PC_enable <= '1';
     -- PC_next <= PC_plus_one;
@@ -149,6 +152,7 @@ begin
     PC_next <= PC_for_BEQ when BEQ_condition_true='1' else  --PC+Imm when BEQ condition passes
                PC_for_JAL when is_instr_jal="1" else --PC+Imm for JAL instr
                PC_for_JLR when JLR_Instr_ID_RR="1" else --RA for JLR instr
+               PC_for_JRI when JRI_Instr_ID_RR="1" else --RA+Imm for JRI instr
                PC_plus_one; -- else PC+1
 
     InstrFetch : Instruction_Fetch port map(
@@ -157,7 +161,7 @@ begin
     
     -- enable_IF_ID <= '1';
     enable_IF_ID <= not clear_IF_ID;
-    clear_IF_ID <= clear or BEQ_condition_true or is_instr_jal(0) or JLR_Instr_ID_RR(0);
+    clear_IF_ID <= clear or BEQ_condition_true or is_instr_jal(0) or JLR_Instr_ID_RR(0) or JRI_Instr_ID_RR(0);
     
     PC_for_R7_IF_ID_reg : nbit_register generic map (N => 16) port map (
         clk => clk, clear => clear, enable => '1', data_in => PC_out, data_out => PC_for_R7_IF_ID
@@ -173,8 +177,9 @@ begin
         Instruction_Register => Instruction_Register_IF_ID, regsource1 => regsource1, regsource2 => regsource2, regdest => regdest,
         alu_operation => alu_operation, register_writeback => register_writeback, load0_store1 => load0_store1,
         sign_extend_6_or_9_bit_immediate => sign_extend_6_or_9_bit_immediate, sign_extend_immediate_opr2 => sign_extend_immediate_opr2,
-        left_shift_registerB => left_shift_registerB, is_instr_lhi => is_instr_lhi, is_instr_jal => is_instr_jal,
-        is_instr_jlr => is_instr_jlr, condition_code => condition_code, flags_modified => flags_modified
+        left_shift_registerB => left_shift_registerB, is_instr_lhi => is_instr_lhi,
+        is_instr_jal => is_instr_jal, is_instr_jlr => is_instr_jlr, is_instr_jri => is_instr_jri,
+        condition_code => condition_code, flags_modified => flags_modified
     );
 
     SignExtendImmediate : sign_extend_immediate port map(
@@ -186,7 +191,7 @@ begin
 
     -- enable_ID_RR <= '1';
     enable_ID_RR <= not clear_ID_RR;
-    clear_ID_RR <= clear or BEQ_condition_true or JLR_Instr_ID_RR(0);
+    clear_ID_RR <= clear or BEQ_condition_true or JLR_Instr_ID_RR(0) or JRI_Instr_ID_RR(0);
     
     PC_for_R7_ID_RR_reg : nbit_register generic map (N => 16) port map (
         clk => clk, clear => clear, enable => '1', data_in => PC_for_R7_IF_ID, data_out => PC_for_R7_ID_RR
@@ -206,6 +211,7 @@ begin
         LHI_Instr_IF_ID => is_instr_lhi, LHI_Instr_ID_RR => LHI_Instr_ID_RR,
         JAL_Instr_IF_ID => is_instr_jal, JAL_Instr_ID_RR => JAL_Instr_ID_RR,
         JLR_Instr_IF_ID => is_instr_jlr, JLR_Instr_ID_RR => JLR_Instr_ID_RR,
+        JRI_Instr_IF_ID => is_instr_jri, JRI_Instr_ID_RR => JRI_Instr_ID_RR,
         Condition_Code_IF_ID => condition_code, Condition_Code_ID_RR => Condition_Code_ID_RR,
         Flags_modified_IF_ID => flags_modified, Flags_modified_ID_RR => Flags_modified_ID_RR
     );
@@ -220,6 +226,7 @@ begin
     -- Reg_WB_Enable depending on Conditional Arith Instr or reg wb signal from Decode stage carried forward
     
     PC_for_JLR <= RegSource1_Data_ID_RR;
+    PC_for_JRI <= std_logic_vector(unsigned(RegSource1_Data_ID_RR) + unsigned(SE_immediate_ID_RR));
 
     -- enable_RR_EX <= '1';
     enable_RR_EX <= not clear_RR_EX;

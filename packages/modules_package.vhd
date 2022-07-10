@@ -67,6 +67,7 @@ package modules_package is
             is_instr_lhi : out std_logic_vector(0 downto 0) := (others => '0'); -- '1' for LHI instruction
             is_instr_jal : out std_logic_vector(0 downto 0) := (others => '0'); -- '1' for JAL instruction
             is_instr_jlr : out std_logic_vector(0 downto 0) := (others => '0'); -- '1' for JLR instruction
+            is_instr_jri : out std_logic_vector(0 downto 0) := (others => '0'); -- '1' for JRI instruction
             condition_code : out std_logic_vector(1 downto 0) := (others => 'X'); -- 00 if no flag needs to be set, 01 if CY, 10 if Z flag needs to be set  
             flags_modified : out std_logic_vector(1 downto 0) := (others => '0') -- 00 for no flags modified, 01 if CY, 10 if Z, 11 if both flags modified
         );
@@ -111,6 +112,8 @@ package modules_package is
             JAL_Instr_ID_RR : out std_logic_vector(0 downto 0) := (others => '0');
             JLR_Instr_IF_ID : in std_logic_vector(0 downto 0);
             JLR_Instr_ID_RR : out std_logic_vector(0 downto 0) := (others => '0');
+            JRI_Instr_IF_ID : in std_logic_vector(0 downto 0);
+            JRI_Instr_ID_RR : out std_logic_vector(0 downto 0) := (others => '0');
             Condition_Code_IF_ID : in std_logic_vector(1 downto 0);
             Condition_Code_ID_RR : out std_logic_vector(1 downto 0) := (others => 'X');
             Flags_modified_IF_ID : in std_logic_vector(1 downto 0); 
