@@ -14,8 +14,10 @@ entity RR_EX is
         PC_plus_one_RR_EX : out std_logic_vector(15 downto 0) := (others => '0');
         Opcode_ID_RR : in std_logic_vector(3 downto 0);
         Opcode_RR_EX : out std_logic_vector(3 downto 0) := (others => '0');
-        RegSource1_Data_ID_RR, RegSource2_Data_ID_RR : in std_logic_vector(15 downto 0);
-        RegSource1_Data_RR_EX, RegSource2_Data_RR_EX : out std_logic_vector(15 downto 0) := (others => 'X');
+        RegSource1_ID_RR, RegSource2_ID_RR : in std_logic_vector(2 downto 0);
+        RegSource1_RR_EX, RegSource2_RR_EX : out std_logic_vector(2 downto 0) := (others => 'X');
+        ALU1st_input_forwarded_data, ALU2nd_input_forwarded_data : in std_logic_vector(15 downto 0);
+        ALU1st_input_forwarded_data_RR_EX, ALU2nd_input_forwarded_data_RR_EX : out std_logic_vector(15 downto 0) := (others => 'X');
         RegDest_ID_RR : in std_logic_vector(2 downto 0);
         RegDest_RR_EX : out std_logic_vector(2 downto 0) := (others => 'X');
         ALU_operation_ID_RR : in std_logic_vector(1 downto 0);
@@ -57,12 +59,20 @@ begin
         clk => clk, clear => clear_RR_EX, enable => enable_RR_EX, data_in => Opcode_ID_RR, data_out => Opcode_RR_EX
     );
     
-    RegSource1Data_reg : nbit_register generic map (N => 16) port map (
-        clk => clk, clear => clear_RR_EX, enable => enable_RR_EX, data_in => RegSource1_Data_ID_RR, data_out => RegSource1_Data_RR_EX
+    RegSource1_reg : nbit_register generic map (N => 3) port map (
+        clk => clk, clear => clear_RR_EX, enable => enable_RR_EX, data_in => RegSource1_ID_RR, data_out => RegSource1_RR_EX
     );
 
-    RegSource2Data_reg : nbit_register generic map (N => 16) port map (
-        clk => clk, clear => clear_RR_EX, enable => enable_RR_EX, data_in => RegSource2_Data_ID_RR, data_out => RegSource2_Data_RR_EX
+    RegSource2_reg : nbit_register generic map (N => 3) port map (
+        clk => clk, clear => clear_RR_EX, enable => enable_RR_EX, data_in => RegSource2_ID_RR, data_out => RegSource2_RR_EX
+    );
+
+    ALUInput1ForwardedData_reg : nbit_register generic map (N => 16) port map (
+        clk => clk, clear => clear_RR_EX, enable => enable_RR_EX, data_in => ALU1st_input_forwarded_data, data_out => ALU1st_input_forwarded_data_RR_EX
+    );
+
+    ALUInput2ForwardedData_reg : nbit_register generic map (N => 16) port map (
+        clk => clk, clear => clear_RR_EX, enable => enable_RR_EX, data_in => ALU2nd_input_forwarded_data, data_out => ALU2nd_input_forwarded_data_RR_EX
     );
 
     RegDest_reg : nbit_register generic map (N => 3) port map (

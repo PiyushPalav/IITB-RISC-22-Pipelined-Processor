@@ -155,8 +155,10 @@ package modules_package is
             PC_plus_one_RR_EX : out std_logic_vector(15 downto 0) := (others => '0');
             Opcode_ID_RR : in std_logic_vector(3 downto 0);
             Opcode_RR_EX : out std_logic_vector(3 downto 0) := (others => '0');
-            RegSource1_Data_ID_RR, RegSource2_Data_ID_RR : in std_logic_vector(15 downto 0);
-            RegSource1_Data_RR_EX, RegSource2_Data_RR_EX : out std_logic_vector(15 downto 0) := (others => 'X');
+            RegSource1_ID_RR, RegSource2_ID_RR : in std_logic_vector(2 downto 0);
+            RegSource1_RR_EX, RegSource2_RR_EX : out std_logic_vector(2 downto 0) := (others => 'X');
+            ALU1st_input_forwarded_data, ALU2nd_input_forwarded_data : in std_logic_vector(15 downto 0);
+            ALU1st_input_forwarded_data_RR_EX, ALU2nd_input_forwarded_data_RR_EX : out std_logic_vector(15 downto 0) := (others => 'X');
             RegDest_ID_RR : in std_logic_vector(2 downto 0);
             RegDest_RR_EX : out std_logic_vector(2 downto 0) := (others => 'X');
             ALU_operation_ID_RR : in std_logic_vector(1 downto 0);
@@ -216,8 +218,8 @@ package modules_package is
             PC_plus_one_EX_MA : out std_logic_vector(15 downto 0) := (others => '0');
             Opcode_RR_EX : in std_logic_vector(3 downto 0);
             Opcode_EX_MA : out std_logic_vector(3 downto 0) := (others => '0');
-            RegSource1_Data_RR_EX, RegSource2_Data_RR_EX : in std_logic_vector(15 downto 0);
-            RegSource1_Data_EX_MA, RegSource2_Data_EX_MA : out std_logic_vector(15 downto 0) := (others => 'X');
+            ALU1st_input_forwarded_data_RR_EX, ALU2nd_input_forwarded_data_RR_EX : in std_logic_vector(15 downto 0);
+            ALU1st_input_forwarded_data_EX_MA, ALU2nd_input_forwarded_data_EX_MA : out std_logic_vector(15 downto 0) := (others => 'X');
             RegDest_RR_EX : in std_logic_vector(2 downto 0);
             RegDest_EX_MA : out std_logic_vector(2 downto 0) := (others => 'X');
             Reg_WB_RR_EX : in std_logic_vector(0 downto 0);
@@ -307,4 +309,40 @@ package modules_package is
             Reg_WB_Enable : out std_logic_vector(0 downto 0) := (others => '0')
         );
     end component Conditional_Arith_Instr_WB;
+
+    component ForwardingUnit is
+        port (
+            RegSource1_ID_RR, RegSource2_ID_RR : in std_logic_vector(2 downto 0);
+            Reg_WB_RR_EX : in std_logic_vector(0 downto 0);
+            RegDest_RR_EX : in std_logic_vector(2 downto 0);
+            LHI_Instr_RR_EX : in std_logic_vector(0 downto 0);
+            JAL_Instr_RR_EX : in std_logic_vector(0 downto 0);
+            JLR_Instr_RR_EX : in std_logic_vector(0 downto 0);
+            LHI_instr_WB_data_RR_EX : in std_logic_vector(15 downto 0);
+            PC_plus_one_RR_EX : in std_logic_vector(15 downto 0);
+            ALU_output_RR_EX : in std_logic_vector(15 downto 0);
+            Reg_WB_EX_MA : in std_logic_vector(0 downto 0);
+            RegDest_EX_MA : in std_logic_vector(2 downto 0);
+            LHI_Instr_EX_MA : in std_logic_vector(0 downto 0);
+            JAL_Instr_EX_MA : in std_logic_vector(0 downto 0);
+            JLR_Instr_EX_MA : in std_logic_vector(0 downto 0);
+            LHI_instr_WB_data_EX_MA : in std_logic_vector(15 downto 0);
+            PC_plus_one_EX_MA : in std_logic_vector(15 downto 0);
+            ALU_output_EX_MA : in std_logic_vector(15 downto 0);
+            Reg_WB_MA_WB : in std_logic_vector(0 downto 0);
+            RegDest_MA_WB : in std_logic_vector(2 downto 0);
+            LHI_Instr_MA_WB : in std_logic_vector(0 downto 0);
+            JAL_Instr_MA_WB : in std_logic_vector(0 downto 0);
+            JLR_Instr_MA_WB : in std_logic_vector(0 downto 0);
+            Load0_Store1_MA_WB : in std_logic_vector(0 downto 0);
+            LHI_instr_WB_data_MA_WB : in std_logic_vector(15 downto 0);
+            PC_plus_one_MA_WB : in std_logic_vector(15 downto 0);
+            ALU_output_MA_WB : in std_logic_vector(15 downto 0);
+            Data_memory_data_out_MA_WB : in std_logic_vector(15 downto 0);
+            Forward_Operand1_Data_Control : out std_logic;
+            Forward_Operand2_Data_Control : out std_logic;
+            Forwarded_Operand1_Data : out std_logic_vector(15 downto 0);
+            Forwarded_Operand2_Data : out std_logic_vector(15 downto 0)
+        );
+    end component;
 end package modules_package;

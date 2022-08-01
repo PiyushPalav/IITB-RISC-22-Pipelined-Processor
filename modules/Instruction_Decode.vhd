@@ -50,7 +50,7 @@ begin
                 if (Instruction_Register(1 downto 0) = "11") then   -- ADL
 					left_shift_registerB <= (others => '1');
 				end if;
-            when "0000" =>              -- ADI
+            when "0110" =>              -- ADI
                 regsource1 <= RA;
                 regsource2 <= "XXX";
                 regdest <= RB;

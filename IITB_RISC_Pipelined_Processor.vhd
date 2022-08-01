@@ -10,7 +10,6 @@ entity IITB_RISC_Pipelined_Processor is
         R0,R1,R2,R3,R4,R5,R6,R7 : out std_logic_vector(15 downto 0);
         Carry_flag : out std_logic_vector(0 downto 0);
         Zero_flag : out std_logic_vector(0 downto 0)
-        -- Data_memory_data_out : out std_logic_vector(15 downto 0) := (others => 'X')
     );
 end entity IITB_RISC_Pipelined_Processor;
 
@@ -74,7 +73,8 @@ architecture Structural of IITB_RISC_Pipelined_Processor is
     signal PC_for_R7_RR_EX : std_logic_vector(15 downto 0) := (others => '0');
     signal PC_plus_one_RR_EX : std_logic_vector(15 downto 0) := (others => '0');
     signal Opcode_RR_EX : std_logic_vector(3 downto 0) := (others => '0');
-    signal RegSource1_Data_RR_EX, RegSource2_Data_RR_EX : std_logic_vector(15 downto 0) := (others => 'X');
+    signal RegSource1_RR_EX, RegSource2_RR_EX : std_logic_vector(2 downto 0) := (others => 'X');
+    signal ALU1st_input_forwarded_data_RR_EX, ALU2nd_input_forwarded_data_RR_EX : std_logic_vector(15 downto 0) := (others => 'X');
     signal RegDest_RR_EX : std_logic_vector(2 downto 0) := (others => 'X');
     signal ALU_operation_RR_EX : std_logic_vector(1 downto 0) := (others => 'X');
     signal Reg_WB_RR_EX : std_logic_vector(0 downto 0) := (others => '0');
@@ -101,7 +101,7 @@ architecture Structural of IITB_RISC_Pipelined_Processor is
     signal PC_for_R7_EX_MA : std_logic_vector(15 downto 0) := (others => '0');
     signal PC_plus_one_EX_MA : std_logic_vector(15 downto 0) := (others => '0');
     signal Opcode_EX_MA : std_logic_vector(3 downto 0) := (others => '0');
-    signal RegSource1_Data_EX_MA, RegSource2_Data_EX_MA : std_logic_vector(15 downto 0) := (others => 'X');
+    signal ALU1st_input_forwarded_data_EX_MA, ALU2nd_input_forwarded_data_EX_MA : std_logic_vector(15 downto 0) := (others => 'X');
     signal RegDest_EX_MA : std_logic_vector(2 downto 0) := (others => 'X');
     signal Reg_WB_EX_MA : std_logic_vector(0 downto 0) := (others => '0');
     signal ALU_output_EX_MA : std_logic_vector(15 downto 0) := (others => '0');
@@ -145,6 +145,13 @@ architecture Structural of IITB_RISC_Pipelined_Processor is
     signal PC_for_JAL : std_logic_vector(15 downto 0) := (others => '0');
     signal PC_for_JLR : std_logic_vector(15 downto 0) := (others => '0');
     signal PC_for_JRI : std_logic_vector(15 downto 0) := (others => '0');
+
+    signal Forward_Operand1_Data_Control : std_logic;
+    signal Forward_Operand2_Data_Control : std_logic;
+    signal Forwarded_Operand1_Data : std_logic_vector(15 downto 0);
+    signal Forwarded_Operand2_Data : std_logic_vector(15 downto 0);
+    signal ALU1st_input_forwarded_data : std_logic_vector(15 downto 0) := (others => '0');
+    signal ALU2nd_input_forwarded_data : std_logic_vector(15 downto 0) := (others => '0');
 begin
     PC_enable <= '1';
     -- PC_next <= PC_plus_one;
@@ -236,11 +243,18 @@ begin
         clk => clk, clear => clear, enable => '1', data_in => PC_for_R7_ID_RR, data_out => PC_for_R7_RR_EX
     );
 
+    ALU1st_input_forwarded_data <= Forwarded_Operand1_Data when (Forward_Operand1_Data_Control = '1') else RegSource1_Data_ID_RR;
+    ALU2nd_input_forwarded_data <= Forwarded_Operand2_Data when (Forward_Operand2_Data_Control = '1') else RegSource2_Data_ID_RR;
+
     RR_EX_pipeline_reg : RR_EX port map(
         clk => clk, clear_RR_EX => clear_RR_EX, enable_RR_EX => enable_RR_EX, PC_ID_RR => PC_ID_RR, PC_RR_EX => PC_RR_EX,
         PC_plus_one_ID_RR => PC_plus_one_ID_RR, PC_plus_one_RR_EX => PC_plus_one_RR_EX,
-        Opcode_ID_RR => Opcode_ID_RR, Opcode_RR_EX => Opcode_RR_EX, RegSource1_Data_ID_RR => RegSource1_Data_ID_RR, RegSource1_Data_RR_EX => RegSource1_Data_RR_EX,
-        RegSource2_Data_ID_RR => RegSource2_Data_ID_RR, RegSource2_Data_RR_EX => RegSource2_Data_RR_EX, RegDest_ID_RR => RegDest_ID_RR, RegDest_RR_EX => RegDest_RR_EX,
+        Opcode_ID_RR => Opcode_ID_RR, Opcode_RR_EX => Opcode_RR_EX,
+        RegSource1_ID_RR => RegSource1_ID_RR, RegSource1_RR_EX => RegSource1_RR_EX,
+        ALU1st_input_forwarded_data => ALU1st_input_forwarded_data, ALU1st_input_forwarded_data_RR_EX => ALU1st_input_forwarded_data_RR_EX,
+        RegSource2_ID_RR => RegSource2_ID_RR, RegSource2_RR_EX => RegSource2_RR_EX,
+        ALU2nd_input_forwarded_data => ALU2nd_input_forwarded_data, ALU2nd_input_forwarded_data_RR_EX => ALU2nd_input_forwarded_data_RR_EX,
+        RegDest_ID_RR => RegDest_ID_RR, RegDest_RR_EX => RegDest_RR_EX,
         ALU_operation_ID_RR => ALU_operation_ID_RR, ALU_operation_RR_EX => ALU_operation_RR_EX,
         Reg_WB_ID_RR => Reg_WB_ID_RR, Reg_WB_RR_EX => Reg_WB_RR_EX, 
         Load0_Store1_ID_RR => Load0_Store1_ID_RR, Load0_Store1_RR_EX => Load0_Store1_RR_EX,
@@ -256,12 +270,28 @@ begin
     
     LHI_instr_WB_data_RR_EX <= SE_immediate_RR_EX(8 downto 0) & "0000000";
 
-    RegSource2_Data_for_ADL <= RegSource2_Data_RR_EX(14 downto 0) & '0';
-    LeftShiftRegB_or_RegSource2_Data <= RegSource2_Data_for_ADL when (Left_Shift_RegB_RR_EX = "1") else RegSource2_Data_RR_EX;
+    RegSource2_Data_for_ADL <= ALU2nd_input_forwarded_data_RR_EX(14 downto 0) & '0';
+    LeftShiftRegB_or_RegSource2_Data <= RegSource2_Data_for_ADL when (Left_Shift_RegB_RR_EX = "1") else ALU2nd_input_forwarded_data_RR_EX;
     ALU2nd_input <= SE_immediate_RR_EX when (SE_immediate_Opr2_RR_EX = "1") else LeftShiftRegB_or_RegSource2_Data;
 
+    DataForwarding : ForwardingUnit port map(
+        RegSource1_ID_RR => RegSource1_ID_RR, RegSource2_ID_RR => RegSource2_ID_RR,
+        Reg_WB_RR_EX => Reg_WB_RR_EX, RegDest_RR_EX => RegDest_RR_EX,
+        LHI_Instr_RR_EX => LHI_Instr_RR_EX, JAL_Instr_RR_EX => JAL_Instr_RR_EX, JLR_Instr_RR_EX => JLR_Instr_RR_EX,
+        LHI_instr_WB_data_RR_EX => LHI_instr_WB_data_RR_EX, PC_plus_one_RR_EX => PC_plus_one_RR_EX, ALU_output_RR_EX => ALU_output_RR_EX,
+        Reg_WB_EX_MA => Reg_WB_EX_MA, RegDest_EX_MA => RegDest_EX_MA,
+        LHI_Instr_EX_MA => LHI_Instr_EX_MA, JAL_Instr_EX_MA => JAL_Instr_EX_MA, JLR_Instr_EX_MA => JLR_Instr_EX_MA,
+        LHI_instr_WB_data_EX_MA => LHI_instr_WB_data_EX_MA, PC_plus_one_EX_MA => PC_plus_one_EX_MA, ALU_output_EX_MA => ALU_output_EX_MA,
+        Reg_WB_MA_WB => Reg_WB_MA_WB, RegDest_MA_WB => RegDest_MA_WB,
+        LHI_Instr_MA_WB => LHI_Instr_MA_WB, JAL_Instr_MA_WB => JAL_Instr_MA_WB, JLR_Instr_MA_WB => JLR_Instr_MA_WB, Load0_Store1_MA_WB => Load0_Store1_MA_WB,
+        LHI_instr_WB_data_MA_WB => LHI_instr_WB_data_MA_WB, PC_plus_one_MA_WB => PC_plus_one_MA_WB, ALU_output_MA_WB => ALU_output_MA_WB,
+        Data_memory_data_out_MA_WB => Data_memory_data_out_MA_WB,
+        Forward_Operand1_Data_Control => Forward_Operand1_Data_Control, Forward_Operand2_Data_Control => Forward_Operand2_Data_Control,
+        Forwarded_Operand1_Data => Forwarded_Operand1_Data, Forwarded_Operand2_Data => Forwarded_Operand2_Data
+    );
+
     ExecuteStage : Execute port map(
-        A => RegSource1_Data_RR_EX, B => ALU2nd_input, Cin => '0', ALU_operation => ALU_operation_RR_EX,
+        A => ALU1st_input_forwarded_data_RR_EX, B => ALU2nd_input, Cin => '0', ALU_operation => ALU_operation_RR_EX,
         Output => ALU_output_RR_EX, ALU_output_flags => ALU_output_flags_RR_EX
     );
 
@@ -276,8 +306,8 @@ begin
     EX_MA_pipeline_reg : EX_MA port map(
         clk => clk, clear_EX_MA => clear, enable_EX_MA => enable_EX_MA, PC_RR_EX => PC_RR_EX, PC_EX_MA => PC_EX_MA,
         PC_plus_one_RR_EX => PC_plus_one_RR_EX, PC_plus_one_EX_MA => PC_plus_one_EX_MA,
-        Opcode_RR_EX => Opcode_RR_EX, Opcode_EX_MA => Opcode_EX_MA, RegSource1_Data_RR_EX => RegSource1_Data_RR_EX, RegSource1_Data_EX_MA => RegSource1_Data_EX_MA,
-        RegSource2_Data_RR_EX => RegSource2_Data_RR_EX, RegSource2_Data_EX_MA => RegSource2_Data_EX_MA,
+        Opcode_RR_EX => Opcode_RR_EX, Opcode_EX_MA => Opcode_EX_MA, ALU1st_input_forwarded_data_RR_EX => ALU1st_input_forwarded_data_RR_EX, ALU1st_input_forwarded_data_EX_MA => ALU1st_input_forwarded_data_EX_MA,
+        ALU2nd_input_forwarded_data_RR_EX => ALU2nd_input_forwarded_data_RR_EX, ALU2nd_input_forwarded_data_EX_MA => ALU2nd_input_forwarded_data_EX_MA,
         RegDest_RR_EX => RegDest_RR_EX, RegDest_EX_MA => RegDest_EX_MA,
         Reg_WB_RR_EX => Reg_WB_RR_EX, Reg_WB_EX_MA => Reg_WB_EX_MA,
         ALU_output_RR_EX => ALU_output_RR_EX, ALU_output_EX_MA => ALU_output_EX_MA,
@@ -296,7 +326,7 @@ begin
 
     Memory_Access : Data_Memory generic map(data_memory_locations => 256, data_length => 16) port map(
         clk => clk, clear => clear, read_enable => Data_Memory_read_enable, write_enable => Data_Memory_write_enable,
-        Data_memory_address => ALU_output_EX_MA, Data_memory_data_in => RegSource2_Data_EX_MA, Data_memory_data_out => Data_memory_data_out
+        Data_memory_address => ALU_output_EX_MA, Data_memory_data_in => ALU2nd_input_forwarded_data_EX_MA, Data_memory_data_out => Data_memory_data_out
     );
     
     enable_MA_WB <= '1';

@@ -45,7 +45,7 @@ begin
     end process;
 
     Compare <= '1' when (A = B) else '0'; -- for BEQ instruction, ALU_operation is 10
-    Is_Zero <= '1' when (to_integer(unsigned(output_signal)) = 0) else '0';
+    Is_Zero <= '1' when output_signal = "0000000000000000" else '0';
     
     Zero <= Compare when ALU_operation="10" else Is_Zero;
     Output <= output_signal;

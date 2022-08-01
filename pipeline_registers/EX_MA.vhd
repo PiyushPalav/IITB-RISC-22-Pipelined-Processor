@@ -14,8 +14,8 @@ entity EX_MA is
         PC_plus_one_EX_MA : out std_logic_vector(15 downto 0) := (others => '0');
         Opcode_RR_EX : in std_logic_vector(3 downto 0);
         Opcode_EX_MA : out std_logic_vector(3 downto 0) := (others => '0');
-        RegSource1_Data_RR_EX, RegSource2_Data_RR_EX : in std_logic_vector(15 downto 0);
-        RegSource1_Data_EX_MA, RegSource2_Data_EX_MA : out std_logic_vector(15 downto 0) := (others => 'X');
+        ALU1st_input_forwarded_data_RR_EX, ALU2nd_input_forwarded_data_RR_EX : in std_logic_vector(15 downto 0);
+        ALU1st_input_forwarded_data_EX_MA, ALU2nd_input_forwarded_data_EX_MA : out std_logic_vector(15 downto 0) := (others => 'X');
         RegDest_RR_EX : in std_logic_vector(2 downto 0);
         RegDest_EX_MA : out std_logic_vector(2 downto 0) := (others => 'X');
         Reg_WB_RR_EX : in std_logic_vector(0 downto 0);
@@ -55,12 +55,12 @@ begin
         clk => clk, clear => clear_EX_MA, enable => enable_EX_MA, data_in => Opcode_RR_EX, data_out => Opcode_EX_MA
     );
     
-    RegSource1Data_reg : nbit_register generic map (N => 16) port map (
-        clk => clk, clear => clear_EX_MA, enable => enable_EX_MA, data_in => RegSource1_Data_RR_EX, data_out => RegSource1_Data_EX_MA
+    ALUInput1ForwardedData_reg : nbit_register generic map (N => 16) port map (
+        clk => clk, clear => clear_EX_MA, enable => enable_EX_MA, data_in => ALU1st_input_forwarded_data_RR_EX, data_out => ALU1st_input_forwarded_data_EX_MA
     );
 
-    RegSource2Data_reg : nbit_register generic map (N => 16) port map (
-        clk => clk, clear => clear_EX_MA, enable => enable_EX_MA, data_in => RegSource2_Data_RR_EX, data_out => RegSource2_Data_EX_MA
+    ALUInput2ForwardedData_reg : nbit_register generic map (N => 16) port map (
+        clk => clk, clear => clear_EX_MA, enable => enable_EX_MA, data_in => ALU2nd_input_forwarded_data_RR_EX, data_out => ALU2nd_input_forwarded_data_EX_MA
     );
 
     RegDest_reg : nbit_register generic map (N => 3) port map (
