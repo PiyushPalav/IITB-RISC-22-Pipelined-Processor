@@ -27,11 +27,6 @@ begin
     Instruction_ROM(5) <= "0011101000000001"; -- LHI R5,#000000001
     Instruction_ROM(6) <= "0011110000000001"; -- LHI R6,#000000001
 
-    -- Instruction_ROM(7) <= "0001001010011000"; -- ADD R3=R1+R2
-    -- Instruction_ROM(8) <= "0001011010100000"; -- ADD R4=R3+R2
-    -- Instruction_ROM(9) <= "0001011010101000"; -- ADD R5=R3+R2
-    -- Instruction_ROM(10) <= "0001011010110000"; -- ADD R6=R3+R2
-
     Instruction_ROM(7) <= "0001001010011000"; -- ADD R3=R1+R2
     Instruction_ROM(8) <= "1000001010000110"; -- BEQ R1,R2,#6
     Instruction_ROM(9) <= "0001001010100000"; -- ADD R4=R1+R2

@@ -232,8 +232,11 @@ begin
     );
     -- Reg_WB_Enable depending on Conditional Arith Instr or reg wb signal from Decode stage carried forward
     
-    PC_for_JLR <= RegSource1_Data_ID_RR;
-    PC_for_JRI <= std_logic_vector(unsigned(RegSource1_Data_ID_RR) + unsigned(SE_immediate_ID_RR));
+    -- PC_for_JLR <= RegSource1_Data_ID_RR;
+    PC_for_JLR <= Forwarded_Operand1_Data when (Forward_Operand1_Data_Control = '1') else RegSource1_Data_ID_RR;
+    -- PC_for_JRI <= std_logic_vector(unsigned(RegSource1_Data_ID_RR) + unsigned(SE_immediate_ID_RR));
+    PC_for_JRI <= std_logic_vector(unsigned(Forwarded_Operand1_Data) + unsigned(SE_immediate_ID_RR)) when (Forward_Operand1_Data_Control = '1')
+                  else std_logic_vector(unsigned(RegSource1_Data_ID_RR) + unsigned(SE_immediate_ID_RR));
 
     -- enable_RR_EX <= '1';
     enable_RR_EX <= not clear_RR_EX;
